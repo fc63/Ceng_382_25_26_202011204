@@ -15,12 +15,6 @@ document.getElementById("addClass").addEventListener("click", function () {
         cell2.textContent = numPeople;
         cell3.textContent = description;
 
-        // Satıra click event ekle (bilgileri konsola yazdır)
-        newRow.addEventListener("click", function () {
-            console.log(`Clicked row: ${className}, ${numPeople}, ${description}`);
-            newRow.style.backgroundColor = "lightblue";
-        });
-
         // Satırın üzerine gelince renk değiştir
         newRow.addEventListener("mouseover", function () {
             newRow.style.backgroundColor = "lightgray";
@@ -41,7 +35,8 @@ document.getElementById("addClass").addEventListener("click", function () {
         document.getElementById("className").value = "";
         document.getElementById("numPeople").value = "";
         document.getElementById("description").value = "";
-
+		
+	sortTable();
     } else {
         alert("Please fill all fields.");
     }
@@ -73,3 +68,18 @@ inputs.forEach(input => {
         input.style.border = "";
     });
 });
+
+function sortTable() {
+    let table = document.getElementById("classTable");
+    let tbody = table.getElementsByTagName("tbody")[0];
+    let rows = Array.from(tbody.getElementsByTagName("tr"));
+
+    rows.sort((a, b) => {
+        let textA = a.cells[0].textContent.trim().toLowerCase();
+        let textB = b.cells[0].textContent.trim().toLowerCase();
+        return textA.localeCompare(textB);
+    });
+
+    tbody.innerHTML = "";
+    rows.forEach(row => tbody.appendChild(row));
+}
