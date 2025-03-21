@@ -1,0 +1,39 @@
+# Visual Studio ve Rider klasörleri
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Derlenmiş dosyalar
+bin/
+obj/
+out/
+
+# Bağımlılıklar
+packages/
+node_modules/
+
+# Log ve yapılandırma dosyaları
+logs/
+*.log
+appsettings.Development.json
+appsettings.Production.json
+secrets.json
+
+# Geçici dosyalar
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+*.vscode/
+
+# Git ile takip edilmemesi gereken özel dosyalar
+*.db
+*.lock
+*.cache
+*.pid
+*.tar.gz
+*.zip
