@@ -1,0 +1,104 @@
+﻿@page
+@model week5_razor.Pages.IndexModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Class Management";
+}
+@*
+prompt: "Create the Index.cshtml file for a Razor Pages project that displays and manages a list of classes. The layout should be responsive using Bootstrap.
+
+Requirements:
+
+    On the left side, show a form that collects Class Name, Student Count, and Description.
+
+    Use Razor tag helpers like asp-for, asp-validation-for, and handle validation messages.
+
+    If an item is being edited (detected using a boolean flag like Model.IsEdit), pre-fill the form and show Update and Cancel buttons.
+
+    Otherwise, show only an Add button.
+
+    On the right side, display a table listing all submitted classes with columns: Id, Class Name, Student Count, Description, and Actions.
+
+    Each row should have Edit and Delete buttons. Edit should pass the item's Id via query string (asp-route-EditId) and Delete should be handled using a form and asp-page-handler="Delete".
+
+    At the top of the page, include Bootstrap CSS via CDN.
+
+    At the bottom, include Razor's validation script partial (_ValidationScriptsPartial).
+
+    Use the model namespace week5_razor.Pages.IndexModel."
+*@
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sol: Form -->
+        <div class="col-md-5">
+            <h4>@(Model.IsEdit ? "Edit Class" : "Add Class")</h4>
+            <form method="post">
+                <div class="mb-3">
+                    <label asp-for="Input.ClassName" class="form-label"></label>
+                    <input asp-for="Input.ClassName" class="form-control" />
+                    <span asp-validation-for="Input.ClassName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.StudentCount" class="form-label"></label>
+                    <input asp-for="Input.StudentCount" class="form-control" />
+                    <span asp-validation-for="Input.StudentCount" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Description" class="form-label"></label>
+                    <textarea asp-for="Input.Description" class="form-control"></textarea>
+                    <span asp-validation-for="Input.Description" class="text-danger"></span>
+                </div>
+                @if (Model.IsEdit)
+                {
+                    <input type="hidden" asp-for="EditId" />
+                    <button type="submit" asp-page-handler="Edit" class="btn btn-warning">Update</button>
+                    <a asp-page="/Index" class="btn btn-secondary">Cancel</a>
+                }
+                else
+                {
+                    <button type="submit" asp-page-handler="Add" class="btn btn-primary">Add</button>
+                }
+            </form>
+        </div>
+
+        <!-- Sağ: Tablo -->
+        <div class="col-md-7">
+            <h4>Class List</h4>
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>Id</th>
+                        <th>Class Name</th>
+                        <th>Student Count</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in IndexModel.ClassList)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>@item.ClassName</td>
+                            <td>@item.StudentCount</td>
+                            <td>@item.Description</td>
+                            <td>
+                                <a asp-page="/Index" asp-route-EditId="@item.Id" class="btn btn-sm btn-warning">Edit</a>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
