@@ -1,49 +1,141 @@
 /*
-prompt: "I’m building a Razor Pages web app to manage a list of classes.
+Week 6 Prompt:
+"
+"Transform the following Index.cshtml.cs file to include filtering and pagination functionality in the backend for a Razor Pages app that manages class data.
 
-I want the backend (Index.cshtml.cs) to:
+Modify and extend the code to satisfy these updated requirements:
 
-    Store class data in a simple static list (in memory).
+✅ Data Structure & Initialization:
 
-    Each class has: Id (auto-increment), Class Name, Student Count, and Description.
+    Keep using the static in-memory list ClassList to store all class records.
 
-    I need a form that allows adding a new class, editing an existing one, and deleting.
+    Add sample data generation in OnGet() if ClassList is empty (generate at least 100 items with dummy values).
 
-The page should support:
+✅ Filtering Support:
 
-    Form validation: make Class Name and Description required, and Student Count should be between 1 and 500.
+    Add a query parameter called Filter (string?, using [BindProperty(SupportsGet = true)]) that is used to filter the class list by ClassName.
 
-    If I'm editing, the form should show the current values.
+    Perform filtering using LINQ inside the OnGet() method.
 
-    After submitting (add, edit, or delete), it should refresh the page.
+✅ Pagination Support:
 
-Use a nested class for form input if needed.
-The code should use C# and Razor Pages only (no JavaScript).
-Keep it clean and simple."
+    Add another query parameter page (bound via [FromQuery(Name = "page")]) to control current page.
+
+    Define PageSize (e.g. 10), calculate TotalPages, and use Skip().Take() to paginate the filtered results.
+
+✅ Data Projection for View:
+
+    Create a new inner class ClassInformationTable that holds the fields to be shown in the table: Id, ClassName, StudentCount, and Description.
+
+    Use .Select() to convert filtered data into this display model.
+
+    Assign the result to a new property called DisplayedList.
+
+✅ Form Editing:
+
+    When EditId is provided, pre-fill the Input form with matching data from the main list (same as before).
+
+✅ Preserve:
+
+    Keep form validation and actions: OnPostAdd, OnPostEdit, OnPostDelete just as they are.
+
+    Keep ClassInputModel as-is, unless necessary changes are needed.
+
+✳️ Important: Refactor only where needed. Do not change the logic for form submission or static list unless related to filtering or pagination.
+
+The final result should match a Razor Pages backend that supports:
+
+    Filtering by class name
+
+    Pagination over the filtered result
+
+    Proper binding and display list preparation (DisplayedList)
+
+    Still supports Add, Edit, and Delete actions like before"
+
+Current index.cshtml.cs: "this should contain the week5 index.cshtml.cs code"
+week 6 index.cshtml: "this should contain the new week 6 index.cshtml content converted by gpt."
+
+Make sure to update all this in accordance with the contents of the week 6 index.cshtml."
+
 */
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using week5_razor.Models;
 
 namespace week5_razor.Pages
 {
     public class IndexModel : PageModel
     {
+        [BindProperty(SupportsGet = true)]
+        public string? Filter { get; set; }
+
+        [FromQuery(Name = "page")]
+        public int CurrentPage { get; set; } = 1;
+
+
+        public int PageSize { get; set; } = 10;
+
+        public int TotalPages { get; set; }
+
+        public class ClassInformationTable
+        {
+            public int Id { get; set; }
+            public string ClassName { get; set; } = string.Empty;
+            public int StudentCount { get; set; }
+            public string Description { get; set; } = string.Empty;
+        }
+
+        public List<ClassInformationTable> DisplayedList { get; set; } = new();
+
         public static List<ClassInformationModel> ClassList { get; set; } = new List<ClassInformationModel>();
 
         [BindProperty]
-        public ClassInputModel Input { get; set; }
+        public ClassInputModel Input { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
         public int? EditId { get; set; }
 
         public bool IsEdit => EditId.HasValue;
 
+
         public void OnGet()
         {
+            if (!ClassList.Any())
+            {
+                for (int i = 1; i <= 100; i++)
+                {
+                    ClassList.Add(new ClassInformationModel
+                    {
+                        ClassName = $"Class {i}",
+                        Description = $"Description for class {i}",
+                        StudentCount = 10 + (i % 20)
+                    });
+                }
+            }
+
+            var filtered = string.IsNullOrWhiteSpace(Filter)
+                ? ClassList
+                : ClassList.Where(c => c.ClassName.Contains(Filter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            int totalItems = filtered.Count;
+            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+
+            DisplayedList = filtered
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
+                .Select(c => new ClassInformationTable
+                {
+                    Id = c.Id,
+                    ClassName = c.ClassName,
+                    StudentCount = c.StudentCount,
+                    Description = c.Description
+                })
+                .ToList();
+
+
             if (IsEdit)
             {
                 var item = ClassList.FirstOrDefault(c => c.Id == EditId);
