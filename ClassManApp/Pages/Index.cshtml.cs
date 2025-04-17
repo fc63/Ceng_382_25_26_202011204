@@ -1,6 +1,43 @@
+/*
+week7 prompt:
+"
+"You are given an existing index.cshtml.cs backend file for a Razor Pages application that manages a list of classes.
+
+Update the IndexModel class to support JSON export functionality as follows:
+Requirements:
+
+    Do not modify the frontend (index.cshtml). Only work inside the index.cshtml.cs (PageModel) file.
+
+    Add a new POST handler method named OnPostExportJson with the following signature:
+
+public IActionResult OnPostExportJson(bool filtered, List<string> selectedColumns, string? filter)
+
+    In this method:
+
+    If filtered is true, apply the same filtering logic as in the OnGet() method using the provided filter string.
+
+    If filtered is false, use the full class list (ClassList) without any filtering.
+
+    Project the data into a ClassInformationTable list.
+
+    Use a Utils singleton helper to convert the list to JSON. This helper should be implemented separately.
+
+    Return the resulting JSON as a downloadable file named export.json.
+
+    Make sure the Utils class is imported (e.g. using ClassManApp.Helpers;).
+
+    Do not modify anything else in the existing page model (e.g., add/edit/delete logic should stay untouched).
+
+Your goal is to enable exporting either all or only filtered class records in JSON format based on user input from the frontend."
+Helpers/Utils.cs:"week7 utils.cs content will be located here"
+Pages/Index.cshtml:"week7 Index.cshtml content will be located here"
+"
+*/
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
+using ClassManApp.Helpers;
 using ClassManApp.Models;
 
 namespace ClassManApp.Pages
@@ -142,6 +179,24 @@ namespace ClassManApp.Pages
 
             [Required]
             public string Description { get; set; } = string.Empty;
+        }
+        public IActionResult OnPostExportJson(bool filtered, List<string> selectedColumns, string? filter)
+        {
+            var baseData = filtered
+                ? ClassList.Where(c => string.IsNullOrWhiteSpace(filter) || c.ClassName.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList()
+                : ClassList;
+
+            var exportData = baseData.Select(c => new ClassInformationTable
+            {
+                Id = c.Id,
+                ClassName = c.ClassName,
+                StudentCount = c.StudentCount,
+                Description = c.Description
+            }).ToList();
+
+            var json = Utils.Instance.ToJson(exportData, selectedColumns);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            return File(bytes, "application/json", "export.json");
         }
     }
 }

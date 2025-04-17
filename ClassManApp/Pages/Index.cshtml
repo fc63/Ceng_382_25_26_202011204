@@ -5,6 +5,39 @@
     ViewData["Title"] = "Class Management";
 }
 
+@*
+
+Week 7 Prompt:
+"
+"Take the following Razor Page view file (index.cshtml) and update it to add a JSON Export feature as described:
+Requirements:
+
+    Do not change anything in the backend logic (index.cshtml.cs). Only modify the Razor view (index.cshtml).
+
+    Add a new POST form below the filter form and above the table. This form should:
+
+        Submit to the page handler ExportJson.
+
+        Include a hidden input named filtered with value true.
+
+        Include a hidden input that retains the current filter value (@Model.Filter) for server use.
+
+        Show four checkboxes named selectedColumns with values: Id, ClassName, StudentCount, and Description, all checked by default.
+
+        Include a button that submits the form with the label “Export as JSON”.
+
+    Ensure the layout and design is consistent with Bootstrap styling.
+
+    Place the form above the table so that it logically applies to the data being displayed.
+
+Keep the rest of the file (form for adding/editing classes, filter input, table, pagination, etc.) unchanged.
+
+Return only the updated index.cshtml file."
+
+Helpers/Utils.cs: "week7 utils.cs content will be located here"
+"
+*@
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
 <div class="container mt-4">
@@ -49,6 +82,31 @@
                     <button type="submit" class="btn btn-outline-secondary">Filter</button>
                 </div>
             </form>
+
+        <form method="post" asp-page-handler="ExportJson" class="mb-3">
+            <input type="hidden" name="filtered" value="true" />
+            <input type="hidden" name="filter" value="@Model.Filter" />
+            <div class="mb-2">
+                <label class="form-check-label fw-bold">Export Columns:</label><br />
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="selectedColumns" value="Id" checked />
+                    <label class="form-check-label">Id</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="selectedColumns" value="ClassName" checked />
+                    <label class="form-check-label">Class Name</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="selectedColumns" value="StudentCount" checked />
+                    <label class="form-check-label">Student Count</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="selectedColumns" value="Description" checked />
+                    <label class="form-check-label">Description</label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Export as JSON</button>
+        </form>
 
             <table class="table table-bordered table-striped">
                 <thead class="table-light">
