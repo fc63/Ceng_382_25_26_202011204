@@ -1,27 +1,25 @@
 /*
-week7 prompt:
-"Write a C# utility class named Utils under the ClassManApp.Helpers namespace.
+week 7 prompt:
+"Create a C# helper class called Utils inside the namespace ClassManApp.Helpers. This class should:
 
-This class must:
+    Be a singleton with a private constructor and a public static Instance property.
 
-    Be implemented as a singleton, with a private constructor and a static Instance property.
+    Contain a generic method ToJson<T> that:
 
-    Contain a public generic method ToJson<T>(...) that takes:
+        Accepts an IEnumerable<T> data and an optional IEnumerable<string> selectedColumns.
 
-        IEnumerable<T> data as the main input list
+        If selectedColumns is null or empty, serialize the entire data object to JSON with indented formatting.
 
-        IEnumerable<string>? selectedColumns as an optional list of selected property names
+        If selectedColumns is provided, iterate over each item in data:
 
-Behavior of ToJson<T>:
+            Use reflection to get properties of T.
 
-    If selectedColumns is null or empty, serialize the entire object as-is using System.Text.Json.
+            For each item, only include properties whose name matches an entry in selectedColumns.
 
-    If selectedColumns is provided, serialize only those properties that are present in the list. Use reflection to filter and build a dictionary for each item accordingly.
+            Store selected values in a dictionary and serialize the list of dictionaries.
 
-    The final output must be a JSON-formatted string with indented formatting enabled (WriteIndented = true).
-
-Use only built-in .NET libraries, no external packages.
-Return the complete class code including using directives."
+Use System.Text.Json and ensure the output JSON is pretty-printed.
+Return only the full Utils.cs file."
 */
 
 using System.Text.Json;

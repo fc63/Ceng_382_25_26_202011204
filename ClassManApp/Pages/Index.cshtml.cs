@@ -1,39 +1,55 @@
 /*
-week7 prompt:
+week 7 prompt:
 "
-"You are given an existing index.cshtml.cs backend file for a Razor Pages application that manages a list of classes.
+"Take the following Razor Pages code-behind file (index.cshtml.cs) and enhance it to support JSON export functionality using POST.
 
-Update the IndexModel class to support JSON export functionality as follows:
-Requirements:
+Do the following changes:
 
-    Do not modify the frontend (index.cshtml). Only work inside the index.cshtml.cs (PageModel) file.
+    Export Handler:
 
-    Add a new POST handler method named OnPostExportJson with the following signature:
+        Add a new handler method called OnPostExportJson.
 
-public IActionResult OnPostExportJson(bool filtered, List<string> selectedColumns, string? filter)
+        This method should accept:
 
-    In this method:
+            bool filtered: to determine whether filtering is applied.
 
-    If filtered is true, apply the same filtering logic as in the OnGet() method using the provided filter string.
+            List<string> selectedColumns: list of column names to include in the export.
 
-    If filtered is false, use the full class list (ClassList) without any filtering.
+            string? filter: to reapply the current filter logic.
 
-    Project the data into a ClassInformationTable list.
+            int currentPage: to determine which page's data to export.
 
-    Use a Utils singleton helper to convert the list to JSON. This helper should be implemented separately.
+        Within the handler:
 
-    Return the resulting JSON as a downloadable file named export.json.
+            Assign the incoming filter and currentPage values to Filter and CurrentPage respectively.
 
-    Make sure the Utils class is imported (e.g. using ClassManApp.Helpers;).
+            Reuse the OnGet() method to populate the DisplayedList according to the current filter and pagination.
 
-    Do not modify anything else in the existing page model (e.g., add/edit/delete logic should stay untouched).
+            Export only the DisplayedList entries as JSON (not all or filtered data).
 
-Your goal is to enable exporting either all or only filtered class records in JSON format based on user input from the frontend."
-Helpers/Utils.cs:"week7 utils.cs content will be located here"
-Pages/Index.cshtml:"week7 Index.cshtml content will be located here"
-"
+            Use a singleton utility (Utils.Instance.ToJson(...)) to serialize the paged data based on selectedColumns.
+
+    Dependencies:
+
+        Assume there is a helper class Utils in ClassManApp.Helpers that performs column-specific JSON serialization.
+
+        Add using ClassManApp.Helpers; at the top of the file.
+
+    Note:
+
+        Do not change any functionality related to adding, editing, deleting, or filtering classes.
+
+        Keep the model binding and pagination logic intact.
+
+Now transform the provided index.cshtml.cs accordingly."
+
+Below you will also find:
+
+    index.cshtml: "index.cshtml content should be here"
+
+    Utils.cs: "Utils.cs content should be here"
+    "
 */
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
@@ -180,21 +196,15 @@ namespace ClassManApp.Pages
             [Required]
             public string Description { get; set; } = string.Empty;
         }
-        public IActionResult OnPostExportJson(bool filtered, List<string> selectedColumns, string? filter)
+        public IActionResult OnPostExportJson(bool filtered, List<string> selectedColumns, string? filter, int currentPage)
         {
-            var baseData = filtered
-                ? ClassList.Where(c => string.IsNullOrWhiteSpace(filter) || c.ClassName.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList()
-                : ClassList;
+            Filter = filter;
+            CurrentPage = currentPage;
+            OnGet();
 
-            var exportData = baseData.Select(c => new ClassInformationTable
-            {
-                Id = c.Id,
-                ClassName = c.ClassName,
-                StudentCount = c.StudentCount,
-                Description = c.Description
-            }).ToList();
+            var paged = DisplayedList;
 
-            var json = Utils.Instance.ToJson(exportData, selectedColumns);
+            var json = Utils.Instance.ToJson(paged, selectedColumns);
             var bytes = System.Text.Encoding.UTF8.GetBytes(json);
             return File(bytes, "application/json", "export.json");
         }
