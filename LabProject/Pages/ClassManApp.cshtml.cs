@@ -39,9 +39,29 @@ namespace LabProject.Pages
 
         public bool IsEdit => EditId.HasValue;
 
-
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            var tokenFromSession = HttpContext.Session.GetString("token");
+            var usernameFromSession = HttpContext.Session.GetString("username");
+            var sessionIdFromSession = HttpContext.Session.Id;
+
+            var tokenFromCookie = Request.Cookies["token"];
+            var usernameFromCookie = Request.Cookies["username"];
+            var sessionIdFromCookie = Request.Cookies["session_id"];
+
+            if (tokenFromSession == null || usernameFromSession == null || sessionIdFromSession == null ||
+                tokenFromCookie == null || usernameFromCookie == null || sessionIdFromCookie == null ||
+                tokenFromSession != tokenFromCookie ||
+                usernameFromSession != usernameFromCookie ||
+                sessionIdFromSession != sessionIdFromCookie)
+            {
+                TempData["Error"] = "Unauthorized access.";
+                Response.Cookies.Delete("token");
+                Response.Cookies.Delete("username");
+                Response.Cookies.Delete("session_id");
+                HttpContext.Session.Clear();
+                return RedirectToPage("/Login");
+            }
             if (!ClassList.Any())
             {
                 for (int i = 1; i <= 100; i++)
@@ -88,6 +108,7 @@ namespace LabProject.Pages
                     };
                 }
             }
+            return Page();
         }
 
         public IActionResult OnPostAdd()
@@ -155,6 +176,14 @@ namespace LabProject.Pages
             var json = Utils.Instance.ToJson(paged, selectedColumns);
             var bytes = System.Text.Encoding.UTF8.GetBytes(json);
             return File(bytes, "application/json", "export.json");
+        }
+        public IActionResult OnPostLogout()
+        {
+            HttpContext.Session.Clear();
+            Response.Cookies.Delete("username");
+            Response.Cookies.Delete("token");
+            Response.Cookies.Delete("session_id");
+            return RedirectToPage("/Login");
         }
     }
 }
