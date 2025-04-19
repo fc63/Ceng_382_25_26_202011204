@@ -1,0 +1,41 @@
+# IDE klasörleri
+.vs/
+.vscode/
+.idea/
+
+# Kullanıcı ve çözüm konfigürasyon dosyaları
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Derlenmiş dosyalar
+bin/
+obj/
+out/
+
+# Bağımlılıklar
+packages/
+node_modules/
+
+# Log ve yapılandırma dosyaları
+logs/
+*.log
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Staging.json
+secrets.json
+
+# Geçici dosyalar
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+
+# Git ile takip edilmemesi gereken özel dosyalar
+*.db
+*.lock
+*.cache
+*.pid
+*.tar.gz
+*.zip
