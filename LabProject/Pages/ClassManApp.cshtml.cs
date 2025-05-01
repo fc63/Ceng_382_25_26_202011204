@@ -1,35 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using ClassManApp.Helpers;
 using ClassManApp.Models;
+using ClassManApp.Data;
 
 namespace LabProject.Pages
 {
     public class ClassManAppModel : PageModel
     {
+        private readonly SchoolDbContext _context;
+
+        public ClassManAppModel(SchoolDbContext context)
+        {
+            _context = context;
+        }
+
         [BindProperty(SupportsGet = true)]
         public string? Filter { get; set; }
 
         [FromQuery(Name = "page")]
         public int CurrentPage { get; set; } = 1;
 
-
         public int PageSize { get; set; } = 10;
-
         public int TotalPages { get; set; }
 
-        public class ClassInformationTable
-        {
-            public int Id { get; set; }
-            public string ClassName { get; set; } = string.Empty;
-            public int StudentCount { get; set; }
-            public string Description { get; set; } = string.Empty;
-        }
-
-        public List<ClassInformationTable> DisplayedList { get; set; } = new();
-
-        public static List<ClassInformationModel> ClassList { get; set; } = new List<ClassInformationModel>();
+        public List<ClassInformationModel> DisplayedList { get; set; } = new();
 
         [BindProperty]
         public ClassInputModel Input { get; set; } = new();
@@ -39,7 +36,113 @@ namespace LabProject.Pages
 
         public bool IsEdit => EditId.HasValue;
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
+        {
+            if (!CheckSessionValidity())
+                return RedirectToPage("/Login");
+
+            IQueryable<ClassInformationModel> query = _context.Classes;
+
+            if (!string.IsNullOrWhiteSpace(Filter))
+                query = query.Where(c => c.Name.Contains(Filter));
+
+            int totalItems = await query.CountAsync();
+            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+
+            DisplayedList = await query
+                .OrderBy(c => c.Id)
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToListAsync();
+
+            if (IsEdit)
+            {
+                var item = await _context.Classes.FindAsync(EditId);
+                if (item != null)
+                {
+                    Input = new ClassInputModel
+                    {
+                        Name = item.Name,
+                        PersonCount = item.PersonCount,
+                        Description = item.Description,
+                        IsActive = item.IsActive
+                    };
+                }
+            }
+
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostAddAsync()
+        {
+            if (!ModelState.IsValid)
+                return Page();
+
+            var newItem = new ClassInformationModel
+            {
+                Name = Input.Name,
+                PersonCount = Input.PersonCount,
+                Description = Input.Description,
+                IsActive = Input.IsActive
+            };
+
+            _context.Classes.Add(newItem);
+            await _context.SaveChangesAsync();
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostEditAsync()
+        {
+            if (!ModelState.IsValid || !EditId.HasValue)
+                return Page();
+
+            var item = await _context.Classes.FindAsync(EditId.Value);
+            if (item != null)
+            {
+                item.Name = Input.Name;
+                item.PersonCount = Input.PersonCount;
+                item.Description = Input.Description;
+                item.IsActive = Input.IsActive;
+
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        {
+            var item = await _context.Classes.FindAsync(id);
+            if (item != null)
+            {
+                _context.Classes.Remove(item);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostExportJsonAsync(bool filtered, List<string> selectedColumns, string? filter, int currentPage)
+        {
+            Filter = filter;
+            CurrentPage = currentPage;
+            await OnGetAsync();
+
+            var json = Utils.Instance.ToJson(DisplayedList, selectedColumns);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            return File(bytes, "application/json", "export.json");
+        }
+
+        public IActionResult OnPostLogout()
+        {
+            HttpContext.Session.Clear();
+            Response.Cookies.Delete("username");
+            Response.Cookies.Delete("token");
+            Response.Cookies.Delete("session_id");
+            return RedirectToPage("/Login");
+        }
+
+        private bool CheckSessionValidity()
         {
             var tokenFromSession = HttpContext.Session.GetString("token");
             var usernameFromSession = HttpContext.Session.GetString("username");
@@ -49,141 +152,37 @@ namespace LabProject.Pages
             var usernameFromCookie = Request.Cookies["username"];
             var sessionIdFromCookie = Request.Cookies["session_id"];
 
-            if (tokenFromSession == null || usernameFromSession == null || sessionIdFromSession == null ||
-                tokenFromCookie == null || usernameFromCookie == null || sessionIdFromCookie == null ||
-                tokenFromSession != tokenFromCookie ||
-                usernameFromSession != usernameFromCookie ||
-                sessionIdFromSession != sessionIdFromCookie)
+            bool valid = tokenFromSession != null &&
+                         usernameFromSession != null &&
+                         sessionIdFromSession != null &&
+                         tokenFromCookie == tokenFromSession &&
+                         usernameFromCookie == usernameFromSession &&
+                         sessionIdFromCookie == sessionIdFromSession;
+
+            if (!valid)
             {
                 TempData["Error"] = "Unauthorized access.";
                 Response.Cookies.Delete("token");
                 Response.Cookies.Delete("username");
                 Response.Cookies.Delete("session_id");
                 HttpContext.Session.Clear();
-                return RedirectToPage("/Login");
-            }
-            if (!ClassList.Any())
-            {
-                for (int i = 1; i <= 100; i++)
-                {
-                    ClassList.Add(new ClassInformationModel
-                    {
-                        ClassName = $"Class {i}",
-                        Description = $"Description for class {i}",
-                        StudentCount = 10 + (i % 20)
-                    });
-                }
             }
 
-            var filtered = string.IsNullOrWhiteSpace(Filter)
-                ? ClassList
-                : ClassList.Where(c => c.ClassName.Contains(Filter, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            int totalItems = filtered.Count;
-            TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
-
-            DisplayedList = filtered
-                .Skip((CurrentPage - 1) * PageSize)
-                .Take(PageSize)
-                .Select(c => new ClassInformationTable
-                {
-                    Id = c.Id,
-                    ClassName = c.ClassName,
-                    StudentCount = c.StudentCount,
-                    Description = c.Description
-                })
-                .ToList();
-
-
-            if (IsEdit)
-            {
-                var item = ClassList.FirstOrDefault(c => c.Id == EditId);
-                if (item != null)
-                {
-                    Input = new ClassInputModel
-                    {
-                        ClassName = item.ClassName,
-                        StudentCount = item.StudentCount,
-                        Description = item.Description
-                    };
-                }
-            }
-            return Page();
-        }
-
-        public IActionResult OnPostAdd()
-        {
-            if (!ModelState.IsValid)
-                return Page();
-
-            var newItem = new ClassInformationModel
-            {
-                ClassName = Input.ClassName,
-                StudentCount = Input.StudentCount,
-                Description = Input.Description
-            };
-
-            ClassList.Add(newItem);
-            return RedirectToPage();
-        }
-
-        public IActionResult OnPostEdit()
-        {
-            if (!ModelState.IsValid || !EditId.HasValue)
-                return Page();
-
-            var item = ClassList.FirstOrDefault(c => c.Id == EditId.Value);
-            if (item != null)
-            {
-                item.ClassName = Input.ClassName;
-                item.StudentCount = Input.StudentCount;
-                item.Description = Input.Description;
-            }
-
-            return RedirectToPage();
-        }
-
-        public IActionResult OnPostDelete(int id)
-        {
-            var item = ClassList.FirstOrDefault(c => c.Id == id);
-            if (item != null)
-            {
-                ClassList.Remove(item);
-            }
-
-            return RedirectToPage();
+            return valid;
         }
 
         public class ClassInputModel
         {
             [Required]
-            public string ClassName { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
 
             [Range(1, 500)]
-            public int StudentCount { get; set; }
+            public int PersonCount { get; set; }
 
             [Required]
             public string Description { get; set; } = string.Empty;
-        }
-        public IActionResult OnPostExportJson(bool filtered, List<string> selectedColumns, string? filter, int currentPage)
-        {
-            Filter = filter;
-            CurrentPage = currentPage;
-            OnGet();
 
-            var paged = DisplayedList;
-
-            var json = Utils.Instance.ToJson(paged, selectedColumns);
-            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-            return File(bytes, "application/json", "export.json");
-        }
-        public IActionResult OnPostLogout()
-        {
-            HttpContext.Session.Clear();
-            Response.Cookies.Delete("username");
-            Response.Cookies.Delete("token");
-            Response.Cookies.Delete("session_id");
-            return RedirectToPage("/Login");
+            public bool IsActive { get; set; } = true;
         }
     }
 }

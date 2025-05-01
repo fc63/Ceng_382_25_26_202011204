@@ -27,19 +27,23 @@
             <h4>@(Model.IsEdit ? "Edit Class" : "Add Class")</h4>
             <form method="post">
                 <div class="mb-3">
-                    <label asp-for="Input.ClassName" class="form-label"></label>
-                    <input asp-for="Input.ClassName" class="form-control" />
-                    <span asp-validation-for="Input.ClassName" class="text-danger"></span>
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name" class="form-control" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Input.StudentCount" class="form-label"></label>
-                    <input asp-for="Input.StudentCount" class="form-control" />
-                    <span asp-validation-for="Input.StudentCount" class="text-danger"></span>
+                    <label asp-for="Input.PersonCount" class="form-label"></label>
+                    <input asp-for="Input.PersonCount" class="form-control" />
+                    <span asp-validation-for="Input.PersonCount" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
                     <label asp-for="Input.Description" class="form-label"></label>
                     <textarea asp-for="Input.Description" class="form-control"></textarea>
                     <span asp-validation-for="Input.Description" class="text-danger"></span>
+                </div>
+                <div class="form-check mb-3">
+                    <input asp-for="Input.IsActive" class="form-check-input" type="checkbox" />
+                    <label asp-for="Input.IsActive" class="form-check-label"></label>
                 </div>
                 @if (Model.IsEdit)
                 {
@@ -74,9 +78,10 @@
             <table class="table table-bordered table-striped">
                 <thead class="table-light">
                     <tr>
-                        <th class="exportable-column" data-column="ClassName">Class Name</th>
-                        <th class="exportable-column" data-column="StudentCount">Student Count</th>
+                        <th class="exportable-column" data-column="Name">Name</th>
+                        <th class="exportable-column" data-column="PersonCount">Person Count</th>
                         <th class="exportable-column" data-column="Description">Description</th>
+                        <th class="exportable-column" data-column="IsActive">Is Active</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -84,9 +89,10 @@
                     @foreach (var item in Model.DisplayedList)
                     {
                         <tr>
-                            <td>@item.ClassName</td>
-                            <td>@item.StudentCount</td>
+                            <td>@item.Name</td>
+                            <td>@item.PersonCount</td>
                             <td>@item.Description</td>
+                            <td>@(item.IsActive ? "Yes" : "No")</td>
                             <td>
                                 <a asp-page="/ClassManApp" asp-route-EditId="@item.Id" class="btn btn-sm btn-warning">Edit</a>
                                 <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" style="display:inline;">
@@ -97,34 +103,34 @@
                     }
                 </tbody>
             </table>
+
             @if (Model.TotalPages > 1)
-{
-    <nav>
-        <ul class="pagination">
-            @if (Model.CurrentPage > 1)
             {
-                <li class="page-item">
-                    <a class="page-link" href="?page=@(Model.CurrentPage - 1)&filter=@Model.Filter">Previous</a>
-                </li>
-            }
+                <nav>
+                    <ul class="pagination">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.CurrentPage - 1)&filter=@Model.Filter">Previous</a>
+                            </li>
+                        }
 
-            @for (int i = 1; i <= Model.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                    <a class="page-link" href="?page=@i&filter=@Model.Filter">@i</a>
-                </li>
-            }
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="?page=@i&filter=@Model.Filter">@i</a>
+                            </li>
+                        }
 
-            @if (Model.CurrentPage < Model.TotalPages)
-            {
-                <li class="page-item">
-                    <a class="page-link" href="?page=@(Model.CurrentPage + 1)&filter=@Model.Filter">Next</a>
-                </li>
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.CurrentPage + 1)&filter=@Model.Filter">Next</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
             }
-        </ul>
-    </nav>
-}
-
         </div>
     </div>
 </div>
@@ -133,10 +139,19 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const selectedColumns = new Set(['ClassName', 'StudentCount', 'Description']);
+            const selectedColumns = new Set(['Name', 'PersonCount', 'Description', 'IsActive']);
             const columnElements = document.querySelectorAll('.exportable-column');
             const form = document.getElementById('exportForm');
 
+            // ➤ Sayfa yüklenirken mevcut seçili kolonlara görsel class ver
+            columnElements.forEach(col => {
+                const colName = col.dataset.column;
+                if (selectedColumns.has(colName)) {
+                    col.classList.add('table-active');
+                }
+            });
+
+            // ➤ Tıklama işlemi
             columnElements.forEach(col => {
                 col.style.cursor = 'pointer';
                 col.addEventListener('click', () => {
