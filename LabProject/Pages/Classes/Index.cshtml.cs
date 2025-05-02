@@ -6,7 +6,7 @@ using ClassManApp.Helpers;
 using ClassManApp.Models;
 using ClassManApp.Data;
 
-namespace LabProject.Pages
+namespace LabProject.Classes
 {
     public class ClassManAppModel : PageModel
     {

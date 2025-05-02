@@ -1,5 +1,5 @@
 ﻿@page
-@model LabProject.Pages.ClassManAppModel
+@model LabProject.Classes.ClassManAppModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     ViewData["Title"] = "Class Management";
@@ -94,7 +94,7 @@
                             <td>@item.Description</td>
                             <td>@(item.IsActive ? "Yes" : "No")</td>
                             <td>
-                                <a asp-page="/ClassManApp" asp-route-EditId="@item.Id" class="btn btn-sm btn-warning">Edit</a>
+                                <a asp-page="/Classes/Index" asp-route-EditId="@item.Id" class="btn btn-sm btn-warning">Edit</a>
                                 <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" style="display:inline;">
                                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                 </form>

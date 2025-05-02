@@ -57,6 +57,6 @@ public class LoginModel : PageModel
         Response.Cookies.Append("token", token, cookieOptions);
         Response.Cookies.Append("session_id", HttpContext.Session.Id, cookieOptions);
 
-        return RedirectToPage("/ClassManApp");
+        return RedirectToPage("/Classes/Index");
     }
 }
