@@ -81,7 +81,7 @@
                         <th class="exportable-column" data-column="Name">Name</th>
                         <th class="exportable-column" data-column="PersonCount">Person Count</th>
                         <th class="exportable-column" data-column="Description">Description</th>
-                        <th class="exportable-column" data-column="IsActive">Is Active</th>
+                        
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -92,7 +92,7 @@
                             <td>@item.Name</td>
                             <td>@item.PersonCount</td>
                             <td>@item.Description</td>
-                            <td>@(item.IsActive ? "Yes" : "No")</td>
+                            
                             <td>
                                 <a asp-page="/Classes/Index" asp-route-EditId="@item.Id" class="btn btn-sm btn-warning">Edit</a>
                                 <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" style="display:inline;">
@@ -139,7 +139,7 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const selectedColumns = new Set(['Name', 'PersonCount', 'Description', 'IsActive']);
+            const selectedColumns = new Set(['Name', 'PersonCount', 'Description']);
             const columnElements = document.querySelectorAll('.exportable-column');
             const form = document.getElementById('exportForm');
 

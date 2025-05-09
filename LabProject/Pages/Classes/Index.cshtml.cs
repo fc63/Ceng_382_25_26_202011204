@@ -41,7 +41,7 @@ namespace LabProject.Classes
             if (!CheckSessionValidity())
                 return RedirectToPage("/Login");
 
-            IQueryable<ClassInformationModel> query = _context.Classes;
+            IQueryable<ClassInformationModel> query = _context.Classes.Where(c => c.IsActive);
 
             if (!string.IsNullOrWhiteSpace(Filter))
                 query = query.Where(c => c.Name.Contains(Filter));
@@ -115,7 +115,7 @@ namespace LabProject.Classes
             var item = await _context.Classes.FindAsync(id);
             if (item != null)
             {
-                _context.Classes.Remove(item);
+                item.IsActive = false;
                 await _context.SaveChangesAsync();
             }
 
