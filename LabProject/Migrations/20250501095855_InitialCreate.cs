@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using ClassManApp.Data;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 

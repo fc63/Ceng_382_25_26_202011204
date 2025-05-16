@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ClassManApp.Models
 {
@@ -17,5 +18,9 @@ namespace ClassManApp.Models
 
         [Required]
         public bool IsActive { get; set; } = true;
+        public string UserId { get; set; }
+
+        [ForeignKey("UserId")]
+        public ApplicationUser? User { get; set; }
     }
 }

@@ -2,12 +2,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 using ClassManApp.Helpers;
 using ClassManApp.Models;
 using ClassManApp.Data;
 
 namespace LabProject.Classes
 {
+    [Authorize]
     public class ClassManAppModel : PageModel
     {
         private readonly SchoolDbContext _context;
@@ -38,9 +43,6 @@ namespace LabProject.Classes
 
         public async Task<IActionResult> OnGetAsync()
         {
-            if (!CheckSessionValidity())
-                return RedirectToPage("/Login");
-
             IQueryable<ClassInformationModel> query = _context.Classes.Where(c => c.IsActive);
 
             if (!string.IsNullOrWhiteSpace(Filter))
@@ -83,7 +85,8 @@ namespace LabProject.Classes
                 Name = Input.Name,
                 PersonCount = Input.PersonCount,
                 Description = Input.Description,
-                IsActive = Input.IsActive
+                IsActive = Input.IsActive,
+                UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
             };
 
             _context.Classes.Add(newItem);
@@ -133,15 +136,11 @@ namespace LabProject.Classes
             return File(bytes, "application/json", "export.json");
         }
 
-        public IActionResult OnPostLogout()
+        public async Task<IActionResult> OnPostLogoutAsync()
         {
-            HttpContext.Session.Clear();
-            Response.Cookies.Delete("username");
-            Response.Cookies.Delete("token");
-            Response.Cookies.Delete("session_id");
+            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
             return RedirectToPage("/Login");
         }
-
         private bool CheckSessionValidity()
         {
             var tokenFromSession = HttpContext.Session.GetString("token");

@@ -1,0 +1,7 @@
+@page
+@functions {
+    public IActionResult OnGet()
+    {
+        return RedirectToPage("/Account/Login", new { area = "Identity" });
+    }
+}
